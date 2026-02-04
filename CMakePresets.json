@@ -1,0 +1,82 @@
+{
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "msvc_17",
+			"generator": "Visual Studio 17 2022",
+			"binaryDir": "${sourceDir}/build/${presetName}"
+		},
+		{
+			"name": "msvc_18",
+			"generator": "Visual Studio 18 2026",
+			"binaryDir": "${sourceDir}/build/${presetName}"
+		},
+		{
+			"name": "ninja_gcc",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "gcc",
+				"CMAKE_CXX_COMPILER": "g++",
+				"CMAKE_BUILD_TYPE": "Debug"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "msvc_17",
+			"configurePreset": "msvc_17",
+			"configuration": "Debug"
+		},
+		{
+			"name": "msvc_18",
+			"configurePreset": "msvc_18",
+			"configuration": "Debug"
+		},
+		{
+			"name": "ninja_gcc",
+			"configurePreset": "ninja_gcc"
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "msvc_17",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "msvc_17"
+				},
+				{
+					"type": "build",
+					"name": "msvc_17"
+				}
+			]
+		},
+		{
+			"name": "msvc_18",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "msvc_18"
+				},
+				{
+					"type": "build",
+					"name": "msvc_18"
+				}
+			]
+		},
+		{
+			"name": "ninja_gcc",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "ninja_gcc"
+				},
+				{
+					"type": "build",
+					"name": "ninja_gcc"
+				}
+			]
+		}
+	]
+}
