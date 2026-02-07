@@ -1,0 +1,13 @@
+module;
+
+#include <print>
+#include <string>
+
+export module cwl;
+
+using namespace std;
+
+template<class T>
+using cr = const T&;
+
+export void write_line(cr<string> message);
