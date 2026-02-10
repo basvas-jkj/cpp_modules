@@ -7,23 +7,10 @@
 			"binaryDir": "${sourceDir}/build/${presetName}"
 		},
 		{
-			"name": "msvc_17_clang",
-			"generator": "Visual Studio 17 2022",
-			"binaryDir": "${sourceDir}/build/${presetName}",
-			"toolset": "ClangCL"
-		},
-		{
 			"name": "msvc_18",
 			"generator": "Visual Studio 18 2026",
 			"binaryDir": "${sourceDir}/build/${presetName}"
 		},
-		{
-			"name": "msvc_18_clang",
-			"generator": "Visual Studio 18 2026",
-			"binaryDir": "${sourceDir}/build/${presetName}",
-			"toolset": "ClangCL"
-		},
-
 		{
 			"name": "ninja_gcc",
 			"generator": "Ninja",
@@ -40,7 +27,7 @@
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
 				"CMAKE_C_COMPILER": "clang",
-				"CMAKE_CXX_COMPILER": "clang",
+				"CMAKE_CXX_COMPILER": "clang++",
 				"CMAKE_BUILD_TYPE": "Debug"
 			}
 		},
@@ -62,21 +49,10 @@
 			"configuration": "Debug"
 		},
 		{
-			"name": "msvc_17_clang",
-			"configurePreset": "msvc_17_clang",
-			"configuration": "Debug"
-		},
-		{
 			"name": "msvc_18",
 			"configurePreset": "msvc_18",
 			"configuration": "Debug"
 		},
-		{
-			"name": "msvc_18_clang",
-			"configurePreset": "msvc_18_clang",
-			"configuration": "Debug"
-		},
-
 		{
 			"name": "ninja_gcc",
 			"configurePreset": "ninja_gcc"
@@ -105,19 +81,6 @@
 			]
 		},
 		{
-			"name": "msvc_17_clang",
-			"steps": [
-				{
-					"type": "configure",
-					"name": "msvc_17_clang"
-				},
-				{
-					"type": "build",
-					"name": "msvc_17_clang"
-				}
-			]
-		},
-		{
 			"name": "msvc_18",
 			"steps": [
 				{
@@ -130,20 +93,6 @@
 				}
 			]
 		},
-		{
-			"name": "msvc_18_clang",
-			"steps": [
-				{
-					"type": "configure",
-					"name": "msvc_18_clang"
-				},
-				{
-					"type": "build",
-					"name": "msvc_18_clang"
-				}
-			]
-		},
-
 		{
 			"name": "ninja_gcc",
 			"steps": [
