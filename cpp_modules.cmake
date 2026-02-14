@@ -55,7 +55,8 @@ function("target_header_units" target visibility)
 		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
 		set(REFERENCE "-fmodule-file=${pcm}")
 
-		target_sources(${target} ${visibility} ${pcm})
+		__sanitise("${header}" header_unit_target)
+		add_dependencies(${target} "${header_unit_target}")
 		target_compile_options(${target} ${visibility} ${REFERENCE})
 	endforeach()
 endfunction()
@@ -73,11 +74,9 @@ function("system_header_units")
 			"-xc++-system-header"
 			"--compile" "${header}" 
 			"-o" "${pcm}")
-
-		add_custom_command(
-			OUTPUT ${pcm}
-			COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
-		)
+		
+		__sanitise("${header}" target_name)
+		__add_header_unit("${target_name}" "" "${pcm}" "${PARAMS}")
 	endforeach()
 endfunction()
 function("user_header_units")
@@ -95,11 +94,8 @@ function("user_header_units")
 			"--compile" "${input}" 
 			"-o" "${pcm}")
 
-			add_custom_command(
-				DEPENDS ${input}
-				OUTPUT ${pcm}
-				COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
-			)
+		__sanitise("${header}" target_name)
+		__add_header_unit("${target_name}" "${input}" "${pcm}" "${PARAMS}")
 	endforeach()
 endfunction()
 function("vcpkg_header_units")
@@ -118,10 +114,31 @@ function("vcpkg_header_units")
 			"-I" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include"
 			"-o" "${pcm}")
 
-			add_custom_command(
-				DEPENDS ${input}
-				OUTPUT ${pcm}
-				COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
-			)
+		__sanitise("${header}" target_name)
+		__add_header_unit("${target_name}" "${input}" "${pcm}" "${PARAMS}")
 	endforeach()
+endfunction()
+
+function(__sanitise file_name target_name)
+	string(MD5 file_hash "${CMAKE_CURRENT_LIST_FILE}")
+	string(REGEX REPLACE "[^A-Za-z0-9_+\\-\\.:]" "_" sanitised ${file_name})
+	set(${target_name} "${sanitised}_${file_hash}" PARENT_SCOPE)
+endfunction()
+function(__add_header_unit target_name header pcm params)
+	if ("${header}" STREQUAL "")
+		add_custom_command(
+			OUTPUT ${pcm}
+			COMMAND ${CMAKE_CXX_COMPILER} ${params}
+			VERBATIM
+		)
+	else()
+		add_custom_command(
+			DEPENDS ${header}
+			OUTPUT ${pcm}
+			COMMAND ${CMAKE_CXX_COMPILER} ${params}
+			VERBATIM
+		)
+	endif()
+
+	add_custom_target("${target_name}" DEPENDS ${pcm})
 endfunction()
