@@ -1,10 +1,9 @@
 #pragma once
+#include <string>
+#include "cr.hpp"
 
-template <class T>
-using cr = const T&;
-
-template <class F, class T>
-void execute(F&& lambda, cr<T> a)
+template <class F>
+void execute(F&& lambda, cr<std::string> a)
 {
 	lambda(a);
 }

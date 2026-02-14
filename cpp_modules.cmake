@@ -39,52 +39,89 @@ elseif(NOT IS_VS)
 endif()
 
 function("target_modules" target visibility)
-	target_sources(${target} ${visibility} FILE_SET CXX_MODULES FILES ${ARGN})
+	target_sources(${target} ${visibility} FILE_SET CXX_MODULES TYPE CXX_MODULES FILES ${ARGN})
 endfunction()
-function("target_external_headers" target visibility header)
-	if (IS_VS)
+function("target_headers" target visibility)
+	target_sources(${target} ${visibility} FILE_SET HEADERS TYPE HEADERS FILES ${ARGN})
+endfunction()
+function("target_header_units" target visibility)
+	if(IS_VS)
 		return()
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
 
-	set(output "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
-	set(PARAMS
-			"-std=c++23"
+	foreach(header IN LISTS ARGN)	
+		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
+		set(REFERENCE "-fmodule-file=${pcm}")
+
+		target_sources(${target} ${visibility} ${pcm})
+		target_compile_options(${target} ${visibility} ${REFERENCE})
+	endforeach()
+endfunction()
+
+function("system_header_units")
+	if(IS_VS)
+		return()
+	endif()
+
+	foreach(header IN LISTS ARGN)
+		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
+		set(PARAMS
+			#${CMAKE_CXX_FLAGS_$<CONFIG>}
+			"-std=c++${CMAKE_CXX_STANDARD}"
 			"-xc++-system-header"
 			"--compile" "${header}" 
-			"-o" "${output}")
-	set(REFERENCE "-fmodule-file=${output}")
-	
-	add_custom_command(
-		OUTPUT ${output}
-		COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
-	)
-	target_sources(${target} ${visibility} ${output})
-	target_compile_options(${target} ${visibility} ${REFERENCE})
+			"-o" "${pcm}")
+
+		add_custom_command(
+			OUTPUT ${pcm}
+			COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
+		)
+	endforeach()
 endfunction()
-function("target_headers" target visibility header)
-	if (IS_VS)
+function("user_header_units")
+	if(IS_VS)
 		return()
-	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
 
-	set(input "${CMAKE_CURRENT_SOURCE_DIR}/${header}")
-	set(output "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
-	set(PARAMS
-			"-std=c++23"
+	foreach(header IN LISTS ARGN)
+		set(input "${CMAKE_CURRENT_SOURCE_DIR}/${header}")
+		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
+		set(PARAMS
+			#${CMAKE_CXX_FLAGS_$<CONFIG>}
+			"-std=c++${CMAKE_CXX_STANDARD}"
+			"-xc++-user-header"
+			"--compile" "${input}" 
+			"-o" "${pcm}")
+
+			add_custom_command(
+				DEPENDS ${input}
+				OUTPUT ${pcm}
+				COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
+			)
+	endforeach()
+endfunction()
+function("vcpkg_header_units")
+	if(IS_VS)
+		return()
+	endif()
+	
+	foreach(header IN LISTS ARGN)	
+		set(input "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/${header}")
+		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
+		set(PARAMS
+			#${CMAKE_CXX_FLAGS_$<CONFIG>}
+			"-std=c++${CMAKE_CXX_STANDARD}"
 			"-xc++-user-header"
 			"--compile" "${input}"
-			"-o" "${output}"
-	)
-	set(REFERENCE "-fmodule-file=${output}")
+			"-I" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include"
+			"-o" "${pcm}")
 
-	add_custom_command(
-		DEPENDS ${input}
-		OUTPUT ${output}
-		COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
-	)
-	target_sources(${target} ${visibility} ${output})
-	target_compile_options(${target} ${visibility} ${REFERENCE})
+			add_custom_command(
+				DEPENDS ${input}
+				OUTPUT ${pcm}
+				COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
+			)
+	endforeach()
 endfunction()

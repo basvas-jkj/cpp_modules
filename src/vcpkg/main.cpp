@@ -13,5 +13,5 @@ int main()
 	root["c"]["d"] = 4;
 	root["c"]["e"] = 5;
 
-	print("{}", root.dump());
+	println("Vcpkg via CMake: {}!", root.dump());
 }
