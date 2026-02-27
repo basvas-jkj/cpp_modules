@@ -5,8 +5,5 @@ project("cpp_moduly")
 
 add_subdirectory("src/named_modules")
 add_subdirectory("src/import_std")
-
-if (IS_VS OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 add_subdirectory("src/header_units")
 add_subdirectory("src/vcpkg")
-endif()
