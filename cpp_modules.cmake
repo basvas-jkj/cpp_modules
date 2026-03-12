@@ -39,101 +39,171 @@ endfunction()
 function("target_headers" target visibility)
 	target_sources(${target} ${visibility} FILE_SET HEADERS TYPE HEADERS FILES ${ARGN})
 endfunction()
-function("target_header_units" target visibility)
+
+function("system_header_units" target visibility)
 	if(IS_VS)
 		return()
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
 
-	foreach(header IN LISTS ARGN)	
-		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
-		set(REFERENCE "-fmodule-file=${pcm}")
+	foreach(header IN LISTS ARGN)
+		__init_header_pcm("${header}" pcm_path)
+		__init_target_name("${header}" header_unit_target)
+		__init_reference("${header}" "${pcm_path}" REFERENCE)
+		
+		__add_system_unit("${header_unit_target}" "${header}" "${pcm_path}")
+		add_dependencies(${target} "${header_unit_target}")
+		target_compile_options(${target} ${visibility} ${REFERENCE})
+	endforeach()
+endfunction()
+function("user_header_units" target visibility)
+	if(IS_VS)
+		return()
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
+	endif()
 
-		__sanitise("${header}" header_unit_target)
+	foreach(header IN LISTS ARGN)
+		__init_header_pcm("${header}" pcm_path)
+		__init_target_name("${header}" header_unit_target)
+		__init_reference("${header}" "${pcm_path}" REFERENCE)
+		
+		__add_user_unit("${header_unit_target}" "${header}" "${pcm_path}")
+		add_dependencies(${target} "${header_unit_target}")
+		target_compile_options(${target} ${visibility} ${REFERENCE})
+	endforeach()
+endfunction()
+function("vcpkg_header_units" target visibility)
+	if(IS_VS)
+		return()
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
+	endif()
+
+	foreach(header IN LISTS ARGN)
+		__init_header_pcm("${header}" pcm_path)
+		__init_target_name("${header}" header_unit_target)
+		__init_reference("${header}" "${pcm_path}" REFERENCE)
+		
+		__add_vcpkg_unit("${header_unit_target}" "${header}" "${pcm_path}")
 		add_dependencies(${target} "${header_unit_target}")
 		target_compile_options(${target} ${visibility} ${REFERENCE})
 	endforeach()
 endfunction()
 
-function("system_header_units")
-	if(IS_VS)
+function(__add_system_unit header_unit_target header pcm_path)
+	if(IS_VS OR TARGET "${header_unit_target}")
 		return()
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
 
-	foreach(header IN LISTS ARGN)
-		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
-		set(PARAMS
-			#${CMAKE_CXX_FLAGS_$<CONFIG>}
-			"-std=c++${CMAKE_CXX_STANDARD}"
-			"-xc++-system-header"
-			"--compile" "${header}" 
-			"-o" "${pcm}")
-		
-		__sanitise("${header}" target_name)
-		__add_header_unit("${target_name}" "" "${pcm}" "${PARAMS}")
-	endforeach()
-endfunction()
-function("user_header_units")
-	if(IS_VS)
-		return()
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	set(PARAMS
+		"-std=c++${CMAKE_CXX_STANDARD}"
+		"-xc++-system-header"
+		"--compile" "${header}"
+		"-o" "${pcm_path}"
+	)
+	elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(PARAMS
+		"-std=c++${CMAKE_CXX_STANDARD}"
+		"-fmodules"
+		"-xc++-system-header"
+		"--compile" "${header}"
+	)
 	endif()
 
-	foreach(header IN LISTS ARGN)
-		set(input "${CMAKE_CURRENT_SOURCE_DIR}/${header}")
-		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
-		set(PARAMS
-			#${CMAKE_CXX_FLAGS_$<CONFIG>}
-			"-std=c++${CMAKE_CXX_STANDARD}"
-			"-xc++-user-header"
-			"--compile" "${input}" 
-			"-o" "${pcm}")
-
-		__sanitise("${header}" target_name)
-		__add_header_unit("${target_name}" "${input}" "${pcm}" "${PARAMS}")
-	endforeach()
+	add_custom_command(
+			OUTPUT ${pcm_path}
+			COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
+			COMMAND ${CMAKE_COMMAND} -E touch ${pcm_path}
+			VERBATIM
+	)
+	add_custom_target("${header_unit_target}" DEPENDS ${pcm_path})
 endfunction()
-function("vcpkg_header_units")
-	if(IS_VS)
+function(__add_user_unit header_unit_target header pcm_path)
+	if(IS_VS OR TARGET "${header_unit_target}")
 		return()
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
+	endif()
+
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	set(PARAMS
+		"-std=c++${CMAKE_CXX_STANDARD}"
+		"-xc++-user-header"
+		"--compile" "${CMAKE_CURRENT_SOURCE_DIR}/${header}"
+		"-o" "${pcm_path}"
+	)
+	elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(PARAMS
+		"-std=c++${CMAKE_CXX_STANDARD}"
+		"-fmodules"
+		"-xc++-user-header"
+		"--compile" "${header}"
+	)
+	endif()
+	add_custom_command(
+			DEPENDS "${header}"
+			OUTPUT ${pcm_path}
+			COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
+			COMMAND ${CMAKE_COMMAND} -E touch ${pcm_path}
+			VERBATIM
+	)
+	add_custom_target("${header_unit_target}" DEPENDS ${pcm_path})
+endfunction()
+function(__add_vcpkg_unit header_unit_target header pcm_path)
+	if(IS_VS OR TARGET "${header_unit_target}")
+		return()
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
 	
-	foreach(header IN LISTS ARGN)	
-		set(input "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/${header}")
-		set(pcm "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm")
-		set(PARAMS
-			#${CMAKE_CXX_FLAGS_$<CONFIG>}
-			"-std=c++${CMAKE_CXX_STANDARD}"
-			"-xc++-user-header"
-			"--compile" "${input}"
-			"-I" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include"
-			"-o" "${pcm}")
+	set(VCPKG_INCLUDE_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
 
-		__sanitise("${header}" target_name)
-		__add_header_unit("${target_name}" "${input}" "${pcm}" "${PARAMS}")
-	endforeach()
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	set(PARAMS
+		"-std=c++${CMAKE_CXX_STANDARD}"
+		"-xc++-user-header"
+		"--compile" "${VCPKG_INCLUDE_PATH}/${header}"
+		"-I" "${VCPKG_INCLUDE_PATH}"
+		"-o" "${pcm_path}"
+	)
+	elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(PARAMS
+		"-std=c++${CMAKE_CXX_STANDARD}"
+		"-fmodules"
+		"-xc++-user-header"
+		"--compile" "${header}"
+	)
+	endif()
+	add_custom_command(
+			DEPENDS "${VCPKG_INCLUDE_PATH}/${header}"
+			OUTPUT ${pcm_path}
+			COMMAND ${CMAKE_CXX_COMPILER} ${PARAMS}
+			COMMAND ${CMAKE_COMMAND} -E touch ${pcm_path}
+			VERBATIM
+	)
+	add_custom_target("${header_unit_target}" DEPENDS ${pcm_path})
 endfunction()
 
-function(__sanitise file_name target_name)
+function(__init_header_pcm header pcm)
+	set(${pcm} "${CMAKE_CURRENT_BINARY_DIR}/pcm_units/${header}.pcm" PARENT_SCOPE)
+endfunction()
+function(__init_target_name file_name target_name)
 	string(MD5 file_hash "${CMAKE_CURRENT_LIST_FILE}")
-	string(REGEX REPLACE "[^A-Za-z0-9_+\\-\\.:]" "_" sanitised ${file_name})
+	string(REGEX REPLACE "[^A-Za-z0-9_+\\-\\.]" "_" sanitised ${file_name})
 	set(${target_name} "${sanitised}_${file_hash}" PARENT_SCOPE)
 endfunction()
-function(__add_header_unit target_name header pcm params)
-	if ("${header}" STREQUAL "")
-		add_custom_command(
-			OUTPUT ${pcm}
-			COMMAND ${CMAKE_CXX_COMPILER} ${params}
-			VERBATIM
-		)
+function(__init_reference header pcm reference)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		set(${reference} "-fmodule-file=${pcm}" PARENT_SCOPE)
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		#g++ -fmodules  unit.hpp main.cpp
+		set(${reference} "-fmodules" PARENT_SCOPE)
 	else()
-		add_custom_command(
-			DEPENDS ${header}
-			OUTPUT ${pcm}
-			COMMAND ${CMAKE_CXX_COMPILER} ${params}
-			VERBATIM
-		)
+		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
-
-	add_custom_target("${target_name}" DEPENDS ${pcm})
 endfunction()
