@@ -1,0 +1,95 @@
+┏━━━━━━━━━━━━━━━━━━━┓
+┃ cpp_modules.cmake ┃
+┗━━━━━━━━━━━━━━━━━━━┛
+The goal of this project is to simplify the use of C++ modules
+in projects that use CMake as their build system. The script is
+designed to rely as much as possible on CMake’s native support
+for named modules, without implementing custom module-handling logic.
+This applies also to the experimental support for „import std“.
+
+┌──────────────────────────┐
+│ What the script provides │
+└──────────────────────────┘
+- sets required variables such as CMAKE_CXX_STANDARD, CMAKE_CXX_MODULE_STD, etc.
+- enables CMake’s experimental support for the standard module via CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
+- simplified assignment of files to targets: `target_modules` and `target_headers`
+  instead of verbose `target_sources` calls with many additional arguments
+- custom support for header units (`system_header_units`, `vcpkg_header_units`, and `user_header_units`)
+
+See the example programs in the `src` directory for concrete usage.
+A more complex example program is also being prepared, see
+https://github.com/basvas-jkj/oul for more information.
+
+┌───────────────────────────────────┐
+│ How to build the example programs │
+└───────────────────────────────────┘
+git clone "https://github.com/basvas-jkj/cpp_modules.git"
+cd cpp_modules
+cmake --workflow [ninja_clang | msvc_17 | msvc18]
+cmake --preset ninja_gcc
+cmake --build --preset ninja_gcc --target [named_modules | import_std]
+
+┌─────────────┐
+│ Limitations │
+└─────────────┘
+- GCC tested only on Linux (Fedora WSL)
+- header unit support for GCC is not yet complete
+- Clang in an LLVM-based environment
+  * for Windows, LLVM Mingw is recommended (https://github.com/mstorsjo/llvm-mingw)
+  * for Linux, the flags -lc++ and -fuse-lld are recommended
+- MSVC supported only when using the Visual Studio generator (VS 17/18)
+
+Unsupported tools:
+- MSVC + Ninja
+  (the script relies on MSBuild’s native module support)
+- ClangCL
+  (does not support MSVC’s C++ module options)
+- official Clang for Windows
+  (depends on MSVC STL, from which it cannot obtain the std module,
+   neither directly nor through CMake)
+- Clang in GNU environments
+  (may fail to compile in some cases)
+- Makefile generator
+  (not supported by CMake for modules)
+- CMake older than 3.30
+  (does not provide import std, although modules work since 3.28)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ CMAKE SUPPORT FOR IMPORT STD ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+┌───────────────┬────────┬───────────────────────────┐
+│    program    │ version│           notes           │
+├───────────────┼────────┼───────────────────────────┤
+│     CMake     │  3.30  │   no header unit support  │
+├───────────────┼────────┼───────────────────────────┤
+│     GCC       │   15   │            ---            │
+├───────────────┼────────┼───────────────────────────┤
+│     Clang     │ 18.1.2 │    libc++ or libstdc++    │
+├───────────────┼────────┼───────────────────────────┤
+│     MSVC      │ 14.36  │            ---            │
+├───────────────┼────────┼───────────────────────────┤
+│     Ninja     │  1.11  │            ---            │
+├───────────────┼────────┼───────────────────────────┤
+│ Visual Studio │  17.6  │            ---            │
+└───────────────┴────────┴───────────────────────────┘
+* minimum versions taken from CMake documentation (https://cmake.org/cmake/help/latest/manual/cmake-cxxmodules.7.html)
+
+┌──────────────────┬───────────┬───────────────┬────────────────────────────┐
+│ operating system │  compiler │  build system │          reality           │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Windows     │    GCC    │     Ninja     │  fails to compile (MinGW)  │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Windows     │   Clang   │     Ninja     │    Clang uses MSVC STL     │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Windows     │   MSVC    │     Ninja     │       does not work        │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Windows     │   Clang   │ Visual Studio │       does not work        │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Windows     │   MSVC    │ Visual Studio │       CMake „cheats“*      │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│       Linux      │    GCC    │     Ninja     │           works            │
+├──────────────────┼───────────┼───────────────┼────────────────────────────┤
+│       Linux      │   Clang   │     Ninja     │           works            │
+└──────────────────┴───────────┴───────────────┴────────────────────────────┘
+* Visual Studio’s build system supports modules (including std) natively.
+  CMake’s module support must therefore be disabled.

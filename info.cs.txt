@@ -1,0 +1,92 @@
+┏━━━━━━━━━━━━━━━━━━━┓
+┃ cpp_modules.cmake ┃
+┗━━━━━━━━━━━━━━━━━━━┛
+Cílem tohoto projektu je usnadnit používání C++ modulů
+v projektech využívajících CMake jako build systém.
+Při návrhu skriptu maximálně využívám podporu pojmenovaných
+modulů pomocí CMake, nesnažím se vytvářet vlastní řešení.
+To platí i pro experimentální podporu „import std“.
+
+┌──────────────────┐
+│ Co skript nabízí │
+└──────────────────┘
+- nastaví potřebné proměnné CMAKE_CXX_STANDARD, CMAKE_CXX_MODULE_STD apod.
+- aktivuje CMake podporu pro modul std pomocí proměnné CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
+- zkrácené přiřazení souborů k targetům: `target_modules` a `target_headers` místo `target_sources` s mnoha argumenty navíc
+- vlastní podpora pro header units (`system_header_units`, `vcpkg_header_units` a `user_header_units`)
+
+Konkrétní využití viz ukázkové programy ve složce `src`.
+Připravuji také složitější ukázkový program, více informací viz https://github.com/basvas-jkj/oul
+
+┌────────────────────────────────┐
+│ Jak sestavit ukázkové programy │
+└────────────────────────────────┘
+git clone "https://github.com/basvas-jkj/cpp_modules.git"
+cd cpp_modules
+cmake --workflow [ninja_clang | msvc_17 | msvc18]
+cmake --preset ninja_gcc
+cmake --preset --build ninja_gcc --target [named_modules | import_std]
+
+┌─────────┐
+│ Omezení │
+└─────────┘
+- GCC testováno pouze na Linuxu (Fedora WSL)
+- podpora header units pro GCC zatím nedokončena
+- Clang v LLVM prostředí
+  * pro Windows doporučuji LLVM Mingw (https://github.com/mstorsjo/llvm-mingw)
+  * pro Linux doporučuji přepínače -lc++ -fuse-lld
+- MSVC pouze při použití generátoru pro Visual Studio (VS 17/18)
+
+Nepodporované nástroje:
+- MSVC + Ninja 
+  (skript využívá nativní podporu modulů v MSBuild)
+- ClangCL
+  (nepodporuje MSVC přepínače pro C++ moduly)
+- oficiální Clang pro Windows
+  (spoléhá na MSVC STL, ze které neumí získat modul std ani samostatně, ani pomocí CMake)
+- Clang v GNU prostředí
+  (v některých případech selže při překladu)
+- Makefile
+  (CMake je nepodporuje)
+- CMake starší než 3.30
+  (nenabízí import std, ačkoli moduly fungují již od verze 3.28)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ CMAKE PODPORA PRO IMPORT STD ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+┌───────────────┬────────┬───────────────────────────┐
+│    program    │ verze* │         poznámky          │
+├───────────────┼────────┼───────────────────────────┤
+│     CMake     │  3.30  │ bez podpory header units  │
+├───────────────┼────────┼───────────────────────────┤
+│     GCC       │   15   │           ---             │
+├───────────────┼────────┼───────────────────────────┤
+│     Clang     │ 18.1.2 │   libc++ nebo libstdc++   │
+├───────────────┼────────┼───────────────────────────┤
+│     MSVC      │ 14.36  │           ---             │
+├───────────────┼────────┼───────────────────────────┤
+│     Ninja     │  1.11  │           ---             │
+├───────────────┼────────┼───────────────────────────┤
+│ Visual Studio │  17.6  │           ---             │
+└───────────────┴────────┴───────────────────────────┘
+* minimální verze převzata z dokumentace CMake (https://cmake.org/cmake/help/latest/manual/cmake-cxxmodules.7.html)
+
+┌─────────────────┬───────────┬───────────────┬────────────────────────────┐
+│ operační systém │ překladač │ build systém  │          realita           │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│     Windows     │    GCC    │     Ninja     │ selže při překladu (MinGW) │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│     Windows     │   Clang   │     Ninja     │   Clang používá MSVC STL   │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│     Windows     │   MSVC    │     Ninja     │         nefunguje          │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│     Windows     │   Clang   │ Visual Studio │         nefunguje          │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│     Windows     │   MSVC    │ Visual Studio │       CMake podvádí*       │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Linux      │    GCC    │     Ninja     │          funguje           │
+├─────────────────┼───────────┼───────────────┼────────────────────────────┤
+│      Linux      │   Clang   │     Ninja     │          funguje           │
+└─────────────────┴───────────┴───────────────┴────────────────────────────┘
+* Build systém Visual Studia moduly (včetně std) podporuje nativně.
+  CMake podporu je tedy nutné vypnout.
