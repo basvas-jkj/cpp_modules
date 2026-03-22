@@ -67,7 +67,7 @@ function("user_header_units" target visibility)
 	if(IS_VS)
 		return()
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
+		message(WARNING "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
 
 	foreach(header IN LISTS ARGN)
