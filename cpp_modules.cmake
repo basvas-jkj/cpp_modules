@@ -1,5 +1,6 @@
 # Created by Basvas j.k.j <basvas@seznam.cz>
-# Unlicensed
+# https://github.com/basvas-jkj/cpp_modules
+# Unlicensed <https://unlicense.org>
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
