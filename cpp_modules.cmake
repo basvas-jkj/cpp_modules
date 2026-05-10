@@ -18,7 +18,7 @@ elseif(CMAKE_VERSION VERSION_LESS_EQUAL "4.0.2")
 	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "a9e1cf81-9932-4810-974b-6eccaf14e457")
 elseif(CMAKE_VERSION VERSION_LESS_EQUAL "4.2.3")
 	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
-elseif(CMAKE_VERSION VERSION_LESS_EQUAL "4.3.0")
+elseif(CMAKE_VERSION VERSION_LESS_EQUAL "4.3.2")
 	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 else()
 	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
@@ -58,6 +58,7 @@ function("system_header_units" target visibility)
 		__init_header_pcm("${header}" pcm_path)
 		__init_target_name("${header}" header_unit_target)
 		__init_reference("${header}" "${pcm_path}" REFERENCE)
+		message("___${header} ${REFERENCE}")
 		
 		__add_system_unit("${header_unit_target}" "${header}" "${pcm_path}")
 		add_dependencies(${target} "${header_unit_target}")
@@ -145,11 +146,13 @@ function(__add_user_unit header_unit_target header pcm_path)
 		"-o" "${pcm_path}"
 	)
 	elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(relative "${CMAKE_CURRENT_SOURCE_DIR}/${header}")
+	cmake_path(RELATIVE_PATH relative BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 	set(PARAMS
 		"-std=c++${CMAKE_CXX_STANDARD}"
 		"-fmodules"
 		"-xc++-user-header"
-		"--compile" "${header}"
+		"--compile" "${relative}"
 	)
 	endif()
 	add_custom_command(
@@ -209,7 +212,7 @@ function(__init_reference header pcm reference)
 		set(${reference} "-fmodule-file=${pcm}" PARENT_SCOPE)
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		#g++ -fmodules  unit.hpp main.cpp
-		set(${reference} "-fmodules" PARENT_SCOPE)
+		set(${reference} "-fmodules" "-include" "${header}" PARENT_SCOPE)
 	else()
 		message(WARNING "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	endif()
