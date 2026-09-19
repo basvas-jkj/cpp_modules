@@ -1,0 +1,7 @@
+{
+	"clangd.path": "clangd",
+	"clangd.arguments": [
+		"--compile-commands-dir=${command:cmake.buildDirectory}",
+		"--experimental-modules-support"
+	]
+}

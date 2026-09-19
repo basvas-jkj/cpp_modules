@@ -1,6 +1,5 @@
 cmake_minimum_required (VERSION 3.30)
 include("cpp_modules.cmake")
-
 project("cpp_moduly")
 
 add_subdirectory("src/named_modules")
