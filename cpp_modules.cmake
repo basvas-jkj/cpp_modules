@@ -41,11 +41,58 @@ else()
 	message(FATAL_ERROR "${CMAKE_GENERATOR} doesn't support C++ modules.'")
 endif()
 
-function("target_modules" target visibility)
-	target_sources(${target} ${visibility} FILE_SET CXX_MODULES TYPE CXX_MODULES FILES ${ARGN})
+macro(__parse_fileset visibility)
+	set(single FILE_SET)
+	set(multi BASE_DIRS FILES)
+	cmake_parse_arguments("arg_${visibility}" "" "${single}" "${multi}" "${ARGN}")
+
+	if (arg_${visibility}_FILE_SET AND NOT arg_${visibility}_UNPARSED_ARGUMENTS)
+		set(fileset_${visibility} ON)
+	else()
+		set(fileset_${visibility} OFF)
+	endif()
+endmacro()
+macro(__parse_args)
+	cmake_parse_arguments(arg "" "" "${visibilities}" "${ARGV}")
+
+	foreach(v IN LISTS visibilities)
+		if (arg_${v})
+			__parse_fileset(${v})
+		endif()
+	endforeach()
+endmacro()
+
+function("target_modules" target)
+	__parse_args(${ARGN})
+
+	foreach(v IN LISTS visibilities)
+		if (fileset_${v} STREQUAL "ON")
+			target_sources(${target} ${v}
+				FILE_SET ${arg_${v}_FILE_SET}
+				TYPE CXX_MODULES
+				BASE_DIRS ${arg_${v}_BASE_DIRS}
+				FILES ${arg_${v}_FILES}
+			)
+		elseif (fileset_${v} STREQUAL "OFF")
+			target_sources(${target} ${v} FILE_SET cxx_modules_${v} TYPE CXX_MODULES FILES ${arg_${v}})
+		endif()
+	endforeach()
 endfunction()
-function("target_headers" target visibility)
-	target_sources(${target} ${visibility} FILE_SET HEADERS TYPE HEADERS FILES ${ARGN})
+function("target_headers" target)
+	__parse_args(${ARGN})
+
+	foreach(v IN LISTS visibilities)
+		if (fileset_${v} STREQUAL "ON")
+			target_sources(${target} ${v}
+				FILE_SET ${arg_${v}_FILE_SET}
+				TYPE HEADERS
+				BASE_DIRS ${arg_${v}_BASE_DIRS}
+				FILES ${arg_${v}_FILES}
+			)
+		elseif (fileset_${v} STREQUAL "OFF")
+			target_sources(${target} ${v} FILE_SET headers_${v} TYPE HEADERS FILES ${arg_${v}})
+		endif()
+	endforeach()
 endfunction()
 
 function("system_header_units" target visibility)
