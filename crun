@@ -1,0 +1,14 @@
+#!/bin/bash
+
+root=$(dirname "$0");
+preset=$1;
+target=$2;
+
+if [ $# -eq 0 ]
+then
+	cmake --list-presets;
+else
+	echo "Running „${target}“ from preset „${preset}“)";
+	[[ $preset == msvc* ]] && "${root}/build/${preset}/src/${target}/Debug/${target}";
+	[[ $preset == ninja* ]] && "${root}/build/${preset}/src/${target}/${target}";
+fi
