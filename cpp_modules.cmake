@@ -35,7 +35,7 @@ set(visibilities PUBLIC PRIVATE INTERFACE)
 
 if(CMAKE_GENERATOR STREQUAL "Visual Studio 17 2022" OR CMAKE_GENERATOR STREQUAL "Visual Studio 18 2026")
 	set(IS_VS ON)
-	set(CMAKE_CXX_MODULE_STD ON)
+	set(CMAKE_CXX_MODULE_STD OFF)
 
 	if (CMAKE_GENERATOR_TOOLSET STREQUAL "ClangCl")
 		message(FATAL_ERROR "Clang-cl doesn't support modules with ${CMAKE_GENERATOR}.")
