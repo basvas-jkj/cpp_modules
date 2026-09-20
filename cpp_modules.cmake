@@ -103,7 +103,7 @@ endfunction()
 function("target_header_units" target type)
 	if(IS_VS)
 		return()
-	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		message(FATAL_ERROR "${CMAKE_GENERATOR} with ${CMAKE_CXX_COMPILER_ID} is not supported currently.")
 	elseif(NOT (type STREQUAL "SYSTEM" OR type STREQUAL "USER" OR type STREQUAL "VCPKG"))
 		message(SEND_ERROR "Header unit can't have ${type} type (supported values: SYSTEM, USER, VCPKG).")
@@ -136,6 +136,8 @@ endfunction()
 function(__init_reference header pcm reference)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		set(${reference} "-fmodule-file=${pcm}" PARENT_SCOPE)
+	elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		set(${reference} "SHELL:/headerUnit:angle ${header}=${pcm}" PARENT_SCOPE)
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		#g++ -fmodules  unit.hpp main.cpp
 		set(${reference} "-fmodules" "-include" "${header}" PARENT_SCOPE)
@@ -153,7 +155,6 @@ function(__add_header_unit type header_unit_target header pcm_path)
 		else()
 			set(std "-std=c++${CMAKE_CXX_STANDARD}")
 		endif()
-		
 		
 		if (type STREQUAL "SYSTEM")
 			set(PARAMS
@@ -177,6 +178,31 @@ function(__add_header_unit type header_unit_target header pcm_path)
 				"--precompile" "${VCPKG_INCLUDE_PATH}/${header}"
 				"-I" "${VCPKG_INCLUDE_PATH}"
 				"-o" "${pcm_path}"
+			)
+		endif()
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		if (type STREQUAL "SYSTEM")
+			set(PARAMS
+				"/std:c++latest"
+				"/exportHeader"
+				"/headerName:angle" "${header}"
+				"/ifcOutput" "${pcm_path}"
+			)
+		elseif(type STREQUAL "USER")
+			set(PARAMS
+				"/std:c++latest"
+				"/exportHeader"
+				"/headerName:angle" "${CMAKE_CURRENT_SOURCE_DIR}/${header}"
+				"/ifcOutput" "${pcm_path}"
+			)
+		else()
+			set(VCPKG_INCLUDE_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+			set(PARAMS
+				"/std:c++latest"
+				"/exportHeader"
+				"/headerName:angle" "${VCPKG_INCLUDE_PATH}/${header}"
+				"/ifcOutput" "${pcm_path}"
+				"/I" "${VCPKG_INCLUDE_PATH}"
 			)
 		endif()
 	endif()
