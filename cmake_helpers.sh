@@ -23,6 +23,22 @@ cbuild()
 		cmake --build --preset "$@"
 	fi
 }
+ctarget()
+{
+	if [ $# -eq 0 ]
+	then
+		cmake --build --list-presets
+	elif [ $# -eq 1 ]
+	then
+		cmake --build --preset "$1"
+	else
+		local preset="$1"
+		local target="$2"
+		shift 2
+
+		cmake --build --preset "$preset" --target "$target" "$@";
+	fi
+}
 cwork()
 {
 	if [ $# -eq 0 ]
@@ -79,6 +95,7 @@ _cpack()
 
 complete -F _cinit cinit
 complete -F _cbuild cbuild
+complete -F _cbuild ctarget
 complete -F _cwork cwork
 complete -F _ctest ctest
 complete -F _cpack cpack
