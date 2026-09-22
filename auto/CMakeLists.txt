@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.30)
-include("cpp_modules.cmake")
-project("cpp_moduly")
+include("cpp_auto_moduly.cmake")
+project("cpp_auto_moduly")
 
 add_subdirectory("src/named_modules")
 add_subdirectory("src/import_std")

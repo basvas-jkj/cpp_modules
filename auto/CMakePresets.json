@@ -1,0 +1,138 @@
+{
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "base",
+			"hidden": true,
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			}
+		},
+		{
+			"name": "msvc_17",
+			"inherits": "base",
+			"generator": "Visual Studio 17 2022"
+		},
+		{
+			"name": "msvc_18",
+			"inherits": "base",
+			"generator": "Visual Studio 18 2026"
+		},
+		{
+			"name": "msvc_clang_17",
+			"inherits": "base",
+			"generator": "Visual Studio 17 2022",
+			"toolset": "ClangCl"
+		},
+		{
+			"name": "msvc_clang_18",
+			"inherits": "base",
+			"generator": "Visual Studio 18 2026",
+			"toolset": "ClangCl"
+		},
+		{
+			"name": "ninja_gcc",
+			"generator": "Ninja",
+			"inherits": "base",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "gcc",
+				"CMAKE_CXX_COMPILER": "g++"
+			}
+		},
+		{
+			"name": "ninja_clang",
+			"generator": "Ninja",
+			"inherits": "base",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "clang",
+				"CMAKE_CXX_COMPILER": "clang++"
+			}
+		},
+		{
+			"name": "ninja_msvc",
+			"inherits": "base",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "cl",
+				"CMAKE_CXX_COMPILER": "cl"
+			}
+		},
+		{
+			"name": "ninja_clang_cl",
+			"inherits": "base",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "clang-cl",
+				"CMAKE_CXX_COMPILER": "clang-cl"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "msvc_17",
+			"configurePreset": "msvc_17",
+			"configuration": "Debug"
+		},
+		{
+			"name": "msvc_18",
+			"configurePreset": "msvc_18",
+			"configuration": "Debug"
+		},
+		{
+			"name": "ninja_gcc",
+			"configurePreset": "ninja_gcc"
+		},
+		{
+			"name": "ninja_clang",
+			"configurePreset": "ninja_clang"
+		},
+		{
+			"name": "ninja_msvc",
+			"configurePreset": "ninja_msvc"
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "msvc_17",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "msvc_17"
+				},
+				{
+					"type": "build",
+					"name": "msvc_17"
+				}
+			]
+		},
+		{
+			"name": "msvc_18",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "msvc_18"
+				},
+				{
+					"type": "build",
+					"name": "msvc_18"
+				}
+			]
+		},
+		{
+			"name": "ninja_clang",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "ninja_clang"
+				},
+				{
+					"type": "build",
+					"name": "ninja_clang"
+				}
+			]
+		}
+	]
+}
