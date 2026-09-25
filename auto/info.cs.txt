@@ -27,22 +27,39 @@ cmake --workflow [ninja_clang | msvc_17 | msvc18]
 cmake --preset ninja_gcc
 cmake --preset --build ninja_gcc --target [named_modules | import_std]
 
+┌────────────────────┐
+│ Co bylo otestováno │
+└────────────────────┘
+Windows:
+	msvc_17
+	ninja_clang
+
+Linux:
+	ninja_gcc (bez header units)
+	ninja_clang
+
+Některé další presety projdou většinou kroků překladu,
+ale selžou při linkování (např. ninja_msvc nebo ninja_gcc na Windows).
+
+Byly také pozorovány problémy při použití CMake 4.4.3 (nestabilní překlad).
+Je také možné, že některé konfigurace překladačů nebudou použitelné.
+
 ┌─────────┐
 │ Omezení │
 └─────────┘
-- GCC testováno pouze na Linuxu (Fedora WSL)
-- podpora header units pro GCC zatím nedokončena
+- GCC testováno pouze na Linuxu (Fedora WSL, Ubuntu WSL)
+- podpora header units pro GCC nedokončena
 - Clang v LLVM prostředí
   * pro Windows doporučuji LLVM Mingw (https://github.com/mstorsjo/llvm-mingw)
   * pro Linux doporučuji přepínače -lc++ -fuse-lld
   * v obou systémech lze také použít moji vlastní, avšak méně vyspělou distribuci
-    llvm_moduly (https://github.com/projekt-jkj/llvm_moduly)   
+    llvm_moduly (https://github.com/projekt-jkj/llvm_moduly)
 - MSVC pouze při použití generátoru pro Visual Studio (VS 17/18)
 
 
 Nepodporované nástroje:
 - MSVC + Ninja 
-  (skript využívá nativní podporu modulů v MSBuild)
+  (selže při linkování)
 - ClangCL
   (nepodporuje MSVC přepínače pro C++ moduly)
 - oficiální Clang pro Windows

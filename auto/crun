@@ -1,0 +1,20 @@
+#!/bin/bash
+# Created by Basvas j.k.j <basvas@seznam.cz>
+# https://github.com/basvas-jkj/cpp_modules
+# Unlicensed <https://unlicense.org>
+
+root=$(dirname "$0");
+preset=$1;
+shift;
+
+if [ $# -eq 0 ]
+then
+	cmake --list-presets;
+else
+	for target in "$@"
+	do
+		echo "Running „${target}“ from preset „${preset}“.";
+		[[ $preset == msvc* ]] && "${root}/build/${preset}/src/${target}/Debug/${target}";
+		[[ $preset == ninja* ]] && "${root}/build/${preset}/src/${target}/${target}";
+	done
+fi

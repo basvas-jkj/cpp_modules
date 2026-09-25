@@ -29,19 +29,38 @@ cmake --workflow [ninja_clang | msvc_17 | msvc18]
 cmake --preset ninja_gcc
 cmake --build --preset ninja_gcc --target [named_modules | import_std]
 
+┌─────────────────┐
+│ What was tested │
+└─────────────────┘
+Windows:
+	msvc_17
+	ninja_clang
+
+Linux:
+	ninja_gcc (without header units)
+	ninja_clang
+
+Some other presets pass most of the compilation steps,
+but fail during linking (e.g. ninja_msvc or ninja_gcc on Windows).
+
+Problems have also been observed when using CMake 4.4.3 (unstable build).
+It is also possible that some compiler configurations may not be usable.
+
 ┌─────────────┐
 │ Limitations │
 └─────────────┘
-- GCC tested only on Linux (Fedora WSL)
-- header unit support for GCC is not yet complete
+- GCC tested only on Linux (Fedora WSL, Ubuntu WSL)
+- header unit support for GCC is not complete
 - Clang in an LLVM-based environment
   * for Windows, LLVM Mingw is recommended (https://github.com/mstorsjo/llvm-mingw)
   * for Linux, the flags -lc++ and -fuse-lld are recommended
+  * in both systems, it is also possible to use my own, albeit less mature, distribution
+    llvm_moduly (https://github.com/projekt-jkj/llvm_moduly)
 - MSVC supported only when using the Visual Studio generator (VS 17/18)
 
 Unsupported tools:
 - MSVC + Ninja
-  (the script relies on MSBuild’s native module support)
+  (fail to link)
 - ClangCL
   (does not support MSVC’s C++ module options)
 - official Clang for Windows
